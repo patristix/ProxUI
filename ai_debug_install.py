@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#This build was debugged with AI, avoid using.
+
 import os
 import pwd
 import sys
@@ -57,9 +57,46 @@ if [ -n "$DISPLAY$WAYLAND_DISPLAY" ]; then
 fi
 '''
 
-def run_cmd(cmd, check=True):
+def run_cmd(cmd, check=True, fatal=True):
     print(f"[*] Running: {' '.join(cmd)}")
-    subprocess.run(cmd, check=check)
+    try:
+        result = subprocess.run(
+            cmd,
+            check=check,
+            text=True,
+            capture_output=True
+        )
+
+        if result.stdout:
+            print(result.stdout.strip())
+        if result.stderr:
+            print(result.stderr.strip())
+
+        return result
+
+    except subprocess.CalledProcessError as e:
+        print(f"[-] Command failed with exit code {e.returncode}: {' '.join(cmd)}")
+        if e.stdout:
+            print("[stdout]")
+            print(e.stdout.strip())
+        if e.stderr:
+            print("[stderr]")
+            print(e.stderr.strip())
+        if fatal:
+            sys.exit(e.returncode)
+        return None
+
+    except FileNotFoundError:
+        print(f"[-] Command not found: {cmd[0]}")
+        if fatal:
+            sys.exit(1)
+        return None
+
+    except Exception as e:
+        print(f"[-] Unexpected error while running {' '.join(cmd)}: {e}")
+        if fatal:
+            sys.exit(1)
+        return None
 
 def logo():
     print("-Welcome to ProxUI Installer v:0.0.1-\nMade with <3 -user 2026")
@@ -174,7 +211,7 @@ def main():
 
     reboot = input("Installation complete. Reboot to make changes? (y/n): ").strip().lower()
     if reboot == "y":
-        run_cmd(["reboot", "now"], check=False)
+        run_cmd(["reboot", "now"], check=False, fatal=False)
     else:
         sys.exit(0)
 

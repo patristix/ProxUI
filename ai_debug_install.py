@@ -57,45 +57,19 @@ if [ -n "$DISPLAY$WAYLAND_DISPLAY" ]; then
 fi
 '''
 
-def run_cmd(cmd, check=True, fatal=True):
+def run_cmd(cmd, check=True):
     print(f"[*] Running: {' '.join(cmd)}")
     try:
-        result = subprocess.run(
-            cmd,
-            check=check,
-            text=True,
-            capture_output=True
-        )
-
-        if result.stdout:
-            print(result.stdout.strip())
-        if result.stderr:
-            print(result.stderr.strip())
-
+        result = subprocess.run(cmd, check=check)
         return result
-
     except subprocess.CalledProcessError as e:
-        print(f"[-] Command failed with exit code {e.returncode}: {' '.join(cmd)}")
-        if e.stdout:
-            print("[stdout]")
-            print(e.stdout.strip())
-        if e.stderr:
-            print("[stderr]")
-            print(e.stderr.strip())
-        if fatal:
-            sys.exit(e.returncode)
+        print(f"[!] Skipping failed command ({e.returncode}): {' '.join(cmd)}")
         return None
-
     except FileNotFoundError:
-        print(f"[-] Command not found: {cmd[0]}")
-        if fatal:
-            sys.exit(1)
+        print(f"[!] Skipping missing command: {cmd[0]}")
         return None
-
     except Exception as e:
-        print(f"[-] Unexpected error while running {' '.join(cmd)}: {e}")
-        if fatal:
-            sys.exit(1)
+        print(f"[!] Skipping command due to unexpected error: {e}")
         return None
 
 def logo():
@@ -211,7 +185,7 @@ def main():
 
     reboot = input("Installation complete. Reboot to make changes? (y/n): ").strip().lower()
     if reboot == "y":
-        run_cmd(["reboot", "now"], check=False, fatal=False)
+        run_cmd(["reboot", "now"])
     else:
         sys.exit(0)
 
